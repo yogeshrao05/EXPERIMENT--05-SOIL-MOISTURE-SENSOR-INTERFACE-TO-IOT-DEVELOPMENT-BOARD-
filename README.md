@@ -1,6 +1,12 @@
 # EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-
-## Aim: To Interface a Analog Input  (soil moisture sensor) to ARM IOT development board and write a  program to obtain  the data on the com port 
-## Components required: STM32 CUBE IDE, ARM IOT development board,  STM programmer tool.
+
+## Aim: 
+To Interface a Analog Input  (soil moisture sensor) to ARM IOT development board and write a  program to obtain  the data on the com port
+
+## Components required: 
+
+STM32 CUBE IDE, ARM IOT development board,  STM programmer tool.
+
 ## Theory 
 #### Hardware Overview
 A typical soil moisture sensor consists of two parts.
@@ -97,13 +103,60 @@ GND is the ground pin.
 
 
 ## STM 32 CUBE PROGRAM :
+```
+#include "main.h"
+#include "stdio.h"
+#include "stdbool.h"
+#include "Soil Moisture Sensor.h"
+long int adc_val;
 
+#if defined(__ICCARM__) || defined (__ARMCC__VERSION)
+#define PUTCHAR_PROTOYPE int fputc(int ch,FILE *f)
+#elif defined(__GNUC__)
+#define PUTCHAR_PROTOTYPE int __io__putchar(int ch)
+#endif
 
+PUTCHAR_PROTOTYPE
+{
+  HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
+  return ch;
+}
+int main(void)
+{
+  while (1)
+  {
+	  HAL_ADC_Start(&hadc);
+	  HAL_ADC_PollForConversion(&hadc,100);
+	  adc_val = HAL_ADC_GetValue(&hadc);
+	  HAL_ADC_Stop(&hadc);
+	  HAL_Delay(500);
+	  printf("ADC VALUE:%ld\n",adc_val);
+          if (adc_val<500)
+	    {
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+}
+if (adc_val>500)
+{
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+}
+
+    
+  }
+}
+
+```
 
 ## Output screen shots on serial monitor   :
  
- 
- 
+ ![iot-09](https://github.com/yogeshrao05/EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-/assets/122008288/0a7d8267-3e52-4949-9a47-9b80ffa4f321)
+
+![iot-10](https://github.com/yogeshrao05/EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-/assets/122008288/550ba891-4890-4d97-98b6-d722087e812b)
+
+
+![image](https://github.com/yogeshrao05/EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-/assets/122008288/8433fa42-38c8-4ae2-bbbb-dff1462394db)
+
+ ![image](https://github.com/yogeshrao05/EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-/assets/122008288/fe98656b-36de-483b-81fe-5276be19ec24)
+
  
 ## Result :
 Interfacing a Analog Input (soil moisture sensor) with ARM microcontroller based IOT development is executed and the results visualized on serial monitor 
