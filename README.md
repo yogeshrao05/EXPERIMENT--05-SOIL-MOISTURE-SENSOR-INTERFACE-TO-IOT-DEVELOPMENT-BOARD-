@@ -1,10 +1,9 @@
 # EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-
 
-## Aim: 
-To Interface a Analog Input  (soil moisture sensor) to ARM IOT development board and write a  program to obtain  the data on the com port
+## Aim:
+To Interface a Analog Input  (soil moisture sensor) to ARM IOT development board and write a  program to obtain  the data on the com port 
 
 ## Components required: 
-
 STM32 CUBE IDE, ARM IOT development board,  STM programmer tool.
 
 ## Theory 
@@ -105,16 +104,20 @@ GND is the ground pin.
 ## STM 32 CUBE PROGRAM :
 ```
 #include "main.h"
-#include "stdio.h"
-#include "stdbool.h"
 #include "Soil Moisture Sensor.h"
-long int adc_val;
-
-#if defined(__ICCARM__) || defined (__ARMCC__VERSION)
-#define PUTCHAR_PROTOYPE int fputc(int ch,FILE *f)
+#include "stdio.h"
+UART_HandleTypeDef huart2;
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_USART2_UART_Init(void);
+void ADC_Init(void);
+void GPIO_Init(void);
+#if defined (__ICCARM__) || defined (__ARMCC_VERSION)
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #elif defined(__GNUC__)
-#define PUTCHAR_PROTOTYPE int __io__putchar(int ch)
-#endif
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#endif 
+
 
 PUTCHAR_PROTOTYPE
 {
@@ -123,40 +126,96 @@ PUTCHAR_PROTOTYPE
 }
 int main(void)
 {
+  HAL_Init();
+  SystemClock_Config();
+  MX_GPIO_Init();
+  MX_USART2_UART_Init();
+  ADC_Init();
+  GPIO_Init();
   while (1)
   {
-	  HAL_ADC_Start(&hadc);
-	  HAL_ADC_PollForConversion(&hadc,100);
-	  adc_val = HAL_ADC_GetValue(&hadc);
-	  HAL_ADC_Stop(&hadc);
-	  HAL_Delay(500);
-	  printf("ADC VALUE:%ld\n",adc_val);
-          if (adc_val<500)
-	    {
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+	  soil_moisture();
+  }
 }
-if (adc_val>500)
+void SystemClock_Config(void)
 {
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
+  RCC_OscInitStruct.MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK3|RCC_CLOCKTYPE_HCLK
+                              |RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1
+                              |RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.AHBCLK3Divider = RCC_SYSCLK_DIV1;
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
-
-    
+static void MX_USART2_UART_Init(void)
+{
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 9600;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart2, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart2, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+static void MX_GPIO_Init(void)
+{
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+}
+void Error_Handler(void)
+{
+  __disable_irq();
+  while (1)
+  {
   }
 }
 
+#ifdef  USE_FULL_ASSERT
+void assert_failed(uint8_t *file, uint32_t line)
+{
+}
+#endif
 ```
-
 ## Output screen shots on serial monitor   :
- 
- ![iot-09](https://github.com/yogeshrao05/EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-/assets/122008288/0a7d8267-3e52-4949-9a47-9b80ffa4f321)
+ ![image](https://github.com/Udhayasankaran04/EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-/assets/119393933/348f1a97-1c5f-41f4-b873-ac45ca0eebb4)
+ ![image](https://github.com/Udhayasankaran04/EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-/assets/119393933/49a7670a-3bd1-48f4-926e-fdef58103c59)
+ ![image](https://github.com/Udhayasankaran04/EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-/assets/119393933/4bc46ea1-bfa0-4123-a3c5-eaf992557dc9)
 
-![iot-10](https://github.com/yogeshrao05/EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-/assets/122008288/550ba891-4890-4d97-98b6-d722087e812b)
-
-
-![image](https://github.com/yogeshrao05/EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-/assets/122008288/8433fa42-38c8-4ae2-bbbb-dff1462394db)
-
- ![image](https://github.com/yogeshrao05/EXPERIMENT--05-SOIL-MOISTURE-SENSOR-INTERFACE-TO-IOT-DEVELOPMENT-BOARD-/assets/122008288/fe98656b-36de-483b-81fe-5276be19ec24)
-
- 
 ## Result :
 Interfacing a Analog Input (soil moisture sensor) with ARM microcontroller based IOT development is executed and the results visualized on serial monitor 
